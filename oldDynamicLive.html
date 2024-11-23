@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fragalyst System Architecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            padding: 2rem;
+        }
+
+        .architecture-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            border: 2px solid #e1e4e8;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: #0366d6;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .component {
+            background: #f6f8fa;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .component:hover {
+            background: #e1e4e8;
+        }
+
+        .component.draggable {
+            cursor: move;
+        }
+
+        .component::after {
+            content: '→';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            color: #586069;
+            margin: 0.5rem 0;
+            animation: pulse 2s infinite;
+        }
+
+        .testing-overlay {
+            position: relative;
+        }
+
+        .testing-indicator {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: glow 1.5s infinite;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-card {
+            background: #f1f8ff;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: scale(1.05);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0366d6;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #586069;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            transition: background 0.2s ease;
+        }
+
+        .tab.active {
+            background: #0366d6;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .documentation-panel {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .doc-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .doc-links a {
+            color: #0366d6;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .doc-links a:hover {
+            background: #0366d6;
+            color: white;
+        }
+
+        .performance-chart {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .log-viewer {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin: 0.5rem 0;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entry.error { color: #f14c4c; }
+        .log-entry.warning { color: #ffd700; }
+        .log-entry.info { color: #4caf50; }
+
+        .test-builder {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .test-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .environment-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .env-card {
+            padding: 1rem;
+            border-radius: 4px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .env-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-healthy { background: #28a745; }
+        .status-warning { background: #ffd700; }
+        .status-error { background: #dc3545; }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+
+        .dropzone {
+            border: 2px dashed #e1e4e8;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .dropzone.dragover {
+            background: #f1f8ff;
+            border-color: #0366d6;
+        }
+    </style>
+</head>
+<body>
+    <div class="architecture-container">
+        <h1 style="text-align: center; margin-bottom: 2rem; color: #24292e;">Fragalyst Drone System Architecture</h1>
+        
+        <!-- Drone Layer -->
+        <section class="section">
+            <h2 class="section-title">🛸 Drone Data Collection Layer</h2>
+            <div class="component testing-overlay draggable">
+                Drone Sensor Data Acquisition
+                <div class="testing-indicator"></div>
+            </div>
+            <div class="component draggable">Edge Processing Unit</div>
+            <div class="component draggable">Real-time Telemetry</div>
+        </section>
+
+        <!-- Test Builder Section -->
+        <section class="section">
+            <h2 class="section-title">🔧 Test Case Builder</h2>
+            <div class="test-builder">
+                <div class="dropzone">
+                    Drag and drop components here to create test cases
+                </div>
+                <div class="test-steps"></div>
+                <button id="runTests" class="btn">Run Test Suite</button>
+            </div>
+        </section>
+
+        <!-- Performance Monitoring -->
+        <section class="section">
+            <h2 class="section-title">📊 Performance Monitoring</h2>
+            <div class="performance-chart">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Environment Status -->
+        <section class="section">
+            <h2 class="section-title">🖥️ Environment Status</h2>
+            <div class="environment-status">
+                <div class="env-card">
+                    <h3>Production</h3>
+                    <div class="env-status">
+                        <div class="status-indicator status-healthy"></div>
+                        <span>Healthy</span>
+                    </div>
+                </div>
+                <div class="env-card">
+                    <h3>Staging</h3>
+                    <div class="env-status">
+                        <div class="status-indicator status-warning"></div>
+                        <span>Warning</span>
+                    </div>
+                </div>
+                <div class="env-card">
+                    <h3>Development</h3>
+                    <div class="env-status">
+                        <div class="status-indicator status-healthy"></div>
+                        <span>Healthy</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Log Viewer -->
+        <section class="section">
+            <h2 class="section-title">📝 System Logs</h2>
+            <div class="log-viewer">
+                <div class="log-entry info">System initialized successfully</div>
+                <div class="log-entry warning">High memory usage detected in Edge Processing Unit</div>
+                <div class="log-entry error">Failed to connect to drone #1242</div>
+            </div>
+        </section>
+
+        <!-- Documentation -->
+        <section class="documentation-panel">
+            <h3>Technical Documentation</h3>
+            <div class="doc-links">
+                <a href="#api-docs">API Reference</a>
+                <a href="#deployment">Deployment Guide</a>
+                <a href="#security">Security Guidelines</a>
+                <a href="#requirements">System Requirements</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="tabs">
+                <div class="tab active" data-tab="details">Details</div>
+                <div class="tab" data-tab="performance">Performance</div>
+                <div class="tab" data-tab="tests">Tests</div>
+                <div class="tab" data-tab="logs">Logs</div>
+            </div>
+            <div class="tab-content active" data-tab="details">
+                <h2 id="modalTitle"></h2>
+                <div id="modalContent"></div>
+            </div>
+            <div class="tab-content" data-tab="performance">
+                <canvas id="componentPerformanceChart"></canvas>
+            </div>
+            <div class="tab-content" data-tab="tests">
+                <div id="testResults"></div>
+            </div>
+            <div class="tab-content" data-tab="logs">
+                <div id="componentLogs" class="log-viewer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Component Details
+        const componentDetails = {
+            'Drone Sensor Data Acquisition': {
+                title: 'Drone Sensor Systems',
+                specs: {
+                    'Camera Resolution': '4K @ 60fps',
+                    'Sensor Types': ['RGB', 'Thermal', 'LiDAR'],
+                    'Data Rate': '100MB/s',
+                    'Latency': '<5ms'
+                },
+                performance: {
+                    labels: ['CPU Usage', 'Memory', 'Network', 'Storage'],
+                    data: [65, 80, 90, 45]
+                },
+                tests: {
+                    'Unit Tests': 98,
+                    'Integration Tests': 95,
+                    'Performance Tests': 100
+                },
+                logs: [
+                    { type: 'info', message: 'Sensor calibration complete' },
+                    { type: 'warning', message: 'High bandwidth usage detected' },
+                    { type: 'error', message: 'Thermal sensor offline' }
+                ]
+            },
+            'Edge Processing Unit': {
+                title: 'Edge Processing System',
+                specs: {
+                    'Processing Speed': '60 fps',
+                    'Memory Usage': '4GB',
+                    'CPU Utilization': '75%'
+                },
+                performance: {
+                    labels: ['CPU Usage', 'Memory', 'Storage', 'Network'],
+                    data: [75, 60, 40, 85]
+                },
+                tests: {
+                    'Unit Tests': 92,
+                    'Integration Tests': 88,
+                    'Performance Tests': 95
+                },
+                logs: [
+                    { type: 'info', message: 'Processing pipeline initialized' },
+                    { type: 'warning', message: 'High CPU usage detected' },
+                    { type: 'info', message: 'Cache cleared successfully' }
+                ]
+            },
+            'Real-time Telemetry': {
+                title: 'Telemetry System',
+                specs: {
+                    'Update Rate': '100Hz',
+                    'Data Points': '1000/s',
+                    'Accuracy': '99.99%'
+                },
+                performance: {
+                    labels: ['CPU Usage', 'Memory', 'Network', 'Latency'],
+                    data: [45, 30, 95, 20]
+                },
+                tests: {
+                    'Unit Tests': 96,
+                    'Integration Tests': 93,
+                    'Performance Tests': 98
+                },
+                logs: [
+                    { type: 'info', message: 'Telemetry stream active' },
+                    { type: 'info', message: 'Data synchronization complete' },
+                    { type: 'warning', message: 'Network latency spike detected' }
+                ]
+            }
+        };
+
+        // Modal and Tab Management
+        const modal = document.getElementById('detailsModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const closeBtn = document.querySelector('.close');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function switchTab(tabId) {
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            document.querySelector(`.tab-content[data-tab="${tabId}"]`).classList.add('active');
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+        });
+
+        // Performance Charts
+        let performanceChart = null;
+        let componentPerformanceChart = null;
+
+        function initializeCharts() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 10}, (_, i) => `T-${10-i}`),
+                    datasets: [{
+                        label: 'System Performance',
+                        data: Array.from({length: 10}, () => Math.random() * 100),
+                        borderColor: '#0366d6',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: {
+                        duration: 2000
+                    }
+                }
+            });
+
+            // Initialize component performance chart
+            const ctxComponent = document.getElementById('componentPerformanceChart').getContext('2d');
+            componentPerformanceChart = new Chart(ctxComponent, {
+                type: 'radar',
+                data: {
+                    labels: ['CPU', 'Memory', 'Network', 'Storage'],
+                    datasets: [{
+                        label: 'Current Usage',
+                        data: [0, 0, 0, 0],
+                        borderColor: '#0366d6',
+                        backgroundColor: 'rgba(3, 102, 214, 0.2)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Drag and Drop Functionality
+        const draggableComponents = document.querySelectorAll('.draggable');
+        const dropzone = document.querySelector('.dropzone');
+        const testSteps = document.querySelector('.test-steps');
+
+        draggableComponents.forEach(component => {
+            component.setAttribute('draggable', true);
+            
+            component.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', component.textContent.trim());
+                component.classList.add('dragging');
+            });
+
+            component.addEventListener('dragend', () => {
+                component.classList.remove('dragging');
+            });
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const componentName = e.dataTransfer.getData('text/plain');
+            
+            const testStep = document.createElement('div');
+            testStep.className = 'test-step';
+            testStep.innerHTML = `
+                <span>${componentName}</span>
+                <select>
+                    <option>Verify Connection</option>
+                    <option>Check Performance</option>
+                    <option>Validate Data</option>
+                </select>
+                <button onclick="this.parentElement.remove()">Remove</button>
+            `;
+            
+            testSteps.appendChild(testStep);
+        });
+
+        // Live Updates
+        function updatePerformanceData() {
+            const newData = Array.from({length: 10}, () => Math.random() * 100);
+            performanceChart.data.datasets[0].data = newData;
+            performanceChart.update();
+        }
+
+        function updateEnvironmentStatus() {
+            const indicators = document.querySelectorAll('.status-indicator');
+            indicators.forEach(indicator => {
+                const random = Math.random();
+                if (random > 0.8) {
+                    indicator.className = 'status-indicator status-error';
+                } else if (random > 0.6) {
+                    indicator.className = 'status-indicator status-warning';
+                } else {
+                    indicator.className = 'status-indicator status-healthy';
+                }
+            });
+        }
+
+        function addLogEntry() {
+            const logViewer = document.querySelector('.log-viewer');
+            const types = ['info', 'warning', 'error'];
+            const messages = [
+                'System check completed',
+                'Memory usage above threshold',
+                'Network latency detected',
+                'Drone connection established',
+                'Data processing complete'
+            ];
+            
+            const type = types[Math.floor(Math.random() * types.length)];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            
+            logViewer.insertBefore(logEntry, logViewer.firstChild);
+            if (logViewer.children.length > 50) {
+                logViewer.removeChild(logViewer.lastChild);
+            }
+        }
+
+        // Initialize and Start Updates
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCharts();
+            
+            // Start periodic updates
+            setInterval(updatePerformanceData, 5000);
+            setInterval(updateEnvironmentStatus, 10000);
+            setInterval(addLogEntry, 3000);
+            
+            // Component click handlers
+            document.querySelectorAll('.component').forEach(component => {
+                component.addEventListener('click', () => {
+                    const details = componentDetails[component.textContent.trim()];
+                    if (details) {
+                        modalTitle.textContent = details.title;
+                        modalContent.innerHTML = `
+                            <h3>Specifications:</h3>
+                            <ul>
+                                ${Object.entries(details.specs).map(([key, value]) => 
+                                    `<li>${key}: ${value}</li>`).join('')}
+                            </ul>
+                            <h3>Test Coverage:</h3>
+                            <ul>
+                                ${Object.entries(details.tests).map(([key, value]) => 
+                                    `<li>${key}: ${value}%</li>`).join('')}
+                            </ul>
+                        `;
+                        
+                        // Update component performance chart
+                        componentPerformanceChart.data.datasets[0].data = details.performance.data;
+                        componentPerformanceChart.data.labels = details.performance.labels;
+                        componentPerformanceChart.update();
+                        
+                        // Update component logs
+                        const componentLogs = document.getElementById('componentLogs');
+                        componentLogs.innerHTML = details.logs.map(log => 
+                            `<div class="log-entry ${log.type}">${log.message}</div>`
+                        ).join('');
+                        
+                        modal.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Close modal handler
+            closeBtn.onclick = () => modal.style.display = 'none';
+            window.onclick = (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            };
+        });
+
+        // Test Runner
+        document.getElementById('runTests').addEventListener('click', () => {
+            const testSteps = document.querySelectorAll('.test-step');
+            testSteps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.style.backgroundColor = '#f0f8ff';
+                    setTimeout(() => {
+                        step.style.backgroundColor = Math.random() > 0.9 ? '#ffe6e6' : '#e6ffe6';
+                    }, 1000);
+                }, index * 1500);
+            });
+        });
+        
+        </script>
+        </body>
+        </html>
+        
