@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Fragalyst System Architecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.14.0/mermaid.min.js"></script>
+    <style>
+        /* Existing styles remain the same */
+         :root {
+            --primary-color: #0366d6;
+            --secondary-color: #28a745;
+            --warning-color: #f6a434;
+            --danger-color: #d73a49;
+            --background-color: #f0f2f5;
+            --component-bg: #f6f8fa;
+            --text-primary: #24292e;
+            --text-secondary: #586069;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: var(--background-color);
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .architecture-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #0366d6, #28a745);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .section:hover .section-title::after {
+            width: 100px;
+        }
+
+        .component {
+            background: var(--component-bg);
+            padding: 1.2rem;
+            margin: 0.8rem 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .component:hover {
+            background: #e1e4e8;
+            transform: scale(1.01);
+        }
+
+        .component-details {
+            display: none;
+            background: white;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .component-details.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 1.2rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .test-case {
+            background: #fff;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .test-status {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .status-passed {
+            background: #28a74533;
+            color: #28a745;
+        }
+
+        .status-failed {
+            background: #d73a4933;
+            color: #d73a49;
+        }
+
+        .performance-chart {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .api-spec {
+            background: #011627;
+            color: #d6deeb;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Monaco', monospace;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .technical-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .spec-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .spec-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .test-metrics {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .test-metric {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+        /* New styles for enhanced features */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-active {
+            background: #28a745;
+            box-shadow: 0 0 8px #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-warning {
+            background: #ffc107;
+            box-shadow: 0 0 8px #ffc107;
+        }
+
+        .status-error {
+            background: #dc3545;
+            box-shadow: 0 0 8px #dc3545;
+        }
+
+        .documentation-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .documentation-panel.active {
+            right: 0;
+        }
+
+        .test-execution {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 1rem 0;
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        .architecture-diagram {
+            width: 100%;
+            margin: 2rem 0;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .test-explorer {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .test-case-builder {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #ccc;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .drag-drop-area:hover {
+            border-color: var(--primary-color);
+            background: #f8f9fa;
+        }
+
+        .log-viewer {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .environment-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .env-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Additional Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="architecture-container">
+        <!-- Existing header section -->
+        <div class="header">
+            <h1>Fragalyst Drone System Architecture</h1>
+            <p>Interactive System Architecture & Test Framework Visualization</p>
+        </div>
+
+		<!-- Drone Layer -->
+        <section class="section" id="drone-layer">
+            <h2 class="section-title">🛸 Drone Data Collection Layer</h2>
+            <div class="technical-specs">
+                <div class="spec-card">
+                    <div class="spec-title">Hardware Specifications</div>
+                    <ul>
+                        <li>Sensor Array: Multi-spectral imaging</li>
+                        <li>Processing: Edge AI capabilities</li>
+                        <li>Communication: 5G enabled</li>
+                    </ul>
+                </div>
+                <div class="spec-card">
+                    <div class="spec-title">Data Collection Metrics</div>
+                    <ul>
+                        <li>Sampling Rate: 100Hz</li>
+                        <li>Data Throughput: 1GB/s</li>
+                        <li>Processing Latency: <5ms</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="component" onclick="toggleDetails('drone-sensor')">
+                Drone Sensor Data Acquisition
+                <div class="test-status status-passed">TESTED</div>
+            </div>
+            <div class="component-details" id="drone-sensor-details">
+                <div class="test-case">
+                    <h4>Test Case: Sensor Data Validation</h4>
+                    <p>Validates sensor data accuracy and consistency</p>
+                    <div class="test-metrics">
+                        <div class="test-metric">
+                            <div class="metric-value">99.9%</div>
+                            <div>Accuracy Rate</div>
+                        </div>
+                        <div class="test-metric">
+                            <div class="metric-value">0.1ms</div>
+                            <div>Latency</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Application -->
+        <section class="section">
+            <h2 class="section-title">⚡ Fragalyst Core</h2>
+            <div class="test-metrics">
+                <div class="test-metric">
+                    <div class="metric-value">98%</div>
+                    <div>Test Coverage</div>
+                </div>
+                <div class="test-metric">
+                    <div class="metric-value">1.2s</div>
+                    <div>Avg Response Time</div>
+                </div>
+                <div class="test-metric">
+                    <div class="metric-value">99.99%</div>
+                    <div>Uptime</div>
+                </div>
+            </div>
+            <div class="component" onclick="showApiSpec()">
+                API Endpoints
+                <div class="test-status status-passed">DOCUMENTED</div>
+            </div>
+            <div class="api-spec">
+                POST /api/v1/drone/data
+                {
+                    "droneId": "string",
+                    "sensorData": object,
+                    "timestamp": "string"
+                }
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2 class="section-title">🔄 System Architecture</h2>
+            <div class="architecture-diagram">
+                <div class="mermaid">
+                    graph TD
+                        subgraph Drone_Layer[Drone Layer]
+                            D[Drone Data Collection] -->|Sensor Data| EP[Edge Processing]
+                            EP -->|Processed Data| DI[Data Ingestion]
+                        end
+                        
+                        subgraph Processing_Layer[Processing Layer]
+                            DI -->|Raw Data| AI[AI Processing]
+                            AI -->|Analyzed Data| DB[(Database)]
+                        end
+                        
+                        subgraph Analysis_Engine[Analysis Engine]
+                            DB -->|Stored Data| API[API Layer]
+                            API -->|Data Feed| VIS[Visualization]
+                        end
+                        
+                        subgraph User_Interface[User Interface]
+                            VIS -->|Rendered View| UI[Web Portal]
+                            UI -->|User Input| API
+                        end
+                        
+                        subgraph Test_Layer[Testing Framework]
+                            TEST[Test Suite] -->|Validates| D
+                            TEST -->|Verifies| EP
+                            TEST -->|Checks| DI
+                            TEST -->|Validates| AI
+                            TEST -->|Verifies| DB
+                            TEST -->|Tests| API
+                            TEST -->|Validates| UI
+                        end
+                        
+                        style Drone_Layer fill:#f0f7ff,stroke:#88c0d0
+                        style Processing_Layer fill:#f0f7ff,stroke:#88c0d0
+                        style Analysis_Engine fill:#f0f7ff,stroke:#88c0d0
+                        style User_Interface fill:#f0f7ff,stroke:#88c0d0
+                        style Test_Layer fill:#f0f7ff,stroke:#88c0d0
+                        
+                        classDef default fill:#fff,stroke:#333,stroke-width:2px
+                        classDef primary fill:#eceff4,stroke:#88c0d0,stroke-width:2px
+                        classDef testing fill:#e5e9f0,stroke:#88c0d0,stroke-width:2px
+                        
+                        class D,EP,DI primary
+                        class AI,DB,API,VIS,UI primary
+                        class TEST testing
+                </div>
+            </div>
+        </section>
+
+        <!-- Enhanced Test Explorer Section -->
+        <section class="section">
+            <h2 class="section-title">🧪 Test Explorer</h2>
+            <div class="test-explorer">
+                <div class="test-case-builder">
+                    <div class="drag-drop-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                        <h3>Test Builder</h3>
+                        <div class="test-execution" id="testOutput">
+                            > Initializing test suite...
+                            > Loading test cases...
+                            > Running integration tests...
+                            > Validating data flow...
+                            > Checking performance metrics...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Status Section -->
+        <section class="section">
+            <h2 class="section-title">📊 System Status</h2>
+            <div class="environment-status">
+                <div class="env-card">
+                    <div class="status-indicator status-active"></div>
+                    <h3>Production Environment</h3>
+                    <p>Status: Operational</p>
+                    <p>Performance: Optimal</p>
+                </div>
+                <div class="env-card">
+                    <div class="status-indicator status-active"></div>
+                    <h3>Test Environment</h3>
+                    <p>Status: Active</p>
+                    <p>Tests: Passing</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quality Metrics Section -->
+        <section class="section">
+            <h2 class="section-title">✅ Quality Metrics</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-value">98%</div>
+                    <div>Test Coverage</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">99.9%</div>
+                    <div>System Uptime</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.1ms</div>
+                    <div>Avg. Latency</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testing Framework -->
+        <section class="section">
+            <h2 class="section-title">🧪 Test Automation Framework</h2>
+            <div class="test-case">
+                <h4>Integration Test Suite</h4>
+                <p>End-to-end workflow validation</p>
+                <canvas id="testMetricsChart"></canvas>
+            </div>
+            <div class="component" onclick="showTestDetails()">
+                Performance Testing Results
+                <div class="test-status status-passed">OPTIMIZED</div>
+            </div>
+        </section>
+
+        <!-- Quality Gates -->
+        <section class="section">
+            <h2 class="section-title">✅ Quality Gates</h2>
+            <div class="metrics">
+                <div class="metric-card" onclick="showMetricDetails('code-quality')">
+                    <div class="metric-value">A+</div>
+                    <div>Code Quality</div>
+                    <div>SonarQube Analysis</div>
+                </div>
+                <div class="metric-card" onclick="showMetricDetails('security')">
+                    <div class="metric-value">100%</div>
+                    <div>Security Compliance</div>
+                    <div>OWASP Top 10</div>
+                </div>
+                <div class="metric-card" onclick="showMetricDetails('performance')">
+                    <div class="metric-value">99.9%</div>
+                    <div>Performance Score</div>
+                    <div>Load Testing</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <div id="modalContent"></div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+
+        <!-- Image Gallery Section -->
+        <section class="section">
+            <h2 class="section-title">📸 System Overview</h2>
+            <div class="image-gallery">
+                <img src="https://testtales.com/wp-content/uploads/2024/11/Screenshot-2024-11-18-011956-05.png" alt="Fragalyst Software Interface" class="gallery-image" onclick="showImageModal('software')">
+                <img src="https://testtales.com/wp-content/uploads/2024/11/Screenshot-2024-11-18-011520-02.png" alt="Drone Hardware" class="gallery-image" onclick="showImageModal('drone')">
+                <img src="https://testtales.com/wp-content/uploads/2024/11/DALL·E-2024-11-24-00.27.00-A-professional-industrial-scene-showing-a-test-engineer-conducting-a-post-blast-survey-using-advanced-drone-technology.-The-engineer-is-wearing-safety.webp" alt="System Architecture" class="gallery-image" onclick="showImageModal('architecture')">
+            </div>
+        </section>
+
+        <!-- Architecture Diagram -->
+        <section class="section">
+            <h2 class="section-title">🔄 System Architecture</h2>
+            <div class="architecture-diagram">
+                <div class="mermaid">
+                    graph TD
+                        A[Drone Layer] -->|Sensor Data| B[Data Collection]
+                        B --> C[Processing Layer]
+                        C --> D[Analysis Engine]
+                        D --> E[Visualization]
+                        E --> F[User Interface]
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Monitoring -->
+        <section class="section">
+            <h2 class="section-title">📊 Live System Status</h2>
+            <div class="environment-status">
+                <div class="env-card">
+                    <div class="status-indicator status-active"></div>
+                    <h3>Production</h3>
+                    <p>CPU: 45% | Memory: 62% | Uptime: 99.99%</p>
+                </div>
+                <div class="env-card">
+                    <div class="status-indicator status-warning"></div>
+                    <h3>Staging</h3>
+                    <p>CPU: 78% | Memory: 85% | Uptime: 98.5%</p>
+                </div>
+                <div class="env-card">
+                    <div class="status-indicator status-active"></div>
+                    <h3>Development</h3>
+                    <p>CPU: 32% | Memory: 54% | Uptime: 99.5%</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Test Explorer -->
+        <section class="section">
+            <h2 class="section-title">🧪 Test Case Explorer</h2>
+            <div class="test-explorer">
+                <div class="test-case-builder">
+                    <div class="drag-drop-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                        <h3>Custom Test Builder</h3>
+                        <p>Drag and drop test components here</p>
+                    </div>
+                    <div class="test-execution" id="testOutput">
+                        > Initializing test environment...
+                        > Loading test cases...
+                        > Starting execution...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Log Viewer -->
+        <section class="section">
+            <h2 class="section-title">📝 System Logs</h2>
+            <div class="log-viewer" id="logViewer">
+                [INFO] System initialized
+                [INFO] Connection established with drone array
+                [WARN] High latency detected in sector 3
+                [INFO] Automatic recovery initiated
+                [SUCCESS] System stabilized
+            </div>
+        </section>
+
+        <!-- Documentation Panel -->
+        <div class="documentation-panel" id="docPanel">
+            <h2>Technical Documentation</h2>
+            <div class="doc-content">
+                <h3>API Reference</h3>
+                <pre>
+GET /api/v1/drones
+POST /api/v1/mission
+PUT /api/v1/config
+                </pre>
+                
+                <h3>System Requirements</h3>
+                <ul>
+                    <li>CPU: 4+ cores</li>
+                    <li>RAM: 16GB+</li>
+                    <li>Storage: 500GB SSD</li>
+                    <li>Network: 1Gbps</li>
+                </ul>
+
+                <h3>Security Guidelines</h3>
+                <ul>
+                    <li>Authentication required</li>
+                    <li>SSL/TLS encryption</li>
+                    <li>Rate limiting enabled</li>
+                    <li>Regular security audits</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <div id="modalContent"></div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ startOnLoad: true });
+
+        // Existing functions remain...
+         // Initialize Charts
+        const ctx = document.getElementById('testMetricsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Test Pass Rate',
+                    data: [97, 98, 99, 99.5],
+                    borderColor: '#0366d6',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Test Success Trend'
+                    }
+                }
+            }
+        });
+
+        // Toggle Component Details
+        function toggleDetails(id) {
+            const details = document.getElementById(`${id}-details`);
+            details.classList.toggle('active');
+        }
+
+        // Show Modal
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        // Show API Specification
+        function showApiSpec() {
+            showModal('API Specification', `
+                <div class="api-spec">
+                    <h4>Endpoints Documentation</h4>
+                    <pre>
+GET /api/v1/drone/status
+                    POST /api/v1/drone/command
+                    PUT /api/v1/drone/config
+                    DELETE /api/v1/drone/{id}
+                    </pre>
+                    <p>All endpoints require authentication via Bearer token</p>
+                </div>
+            `);
+        }
+
+        // Show Test Details
+        function showTestDetails() {
+            showModal('Performance Test Results', `
+                <div class="test-metrics">
+                    <div class="test-metric">
+                        <div class="metric-value">1.2s</div>
+                        <div>Average Response Time</div>
+                    </div>
+                    <div class="test-metric">
+                        <div class="metric-value">5000</div>
+                        <div>Requests/Second</div>
+                    </div>
+                    <div class="test-metric">
+                        <div class="metric-value">99.99%</div>
+                        <div>Success Rate</div>
+                    </div>
+                </div>
+                <div class="performance-chart">
+                    <h4>Load Test Results</h4>
+                    <p>System maintained performance under sustained load</p>
+                </div>
+            `);
+        }
+
+        // Show Metric Details
+        function showMetricDetails(metric) {
+            const metricDetails = {
+                'code-quality': {
+                    title: 'Code Quality Analysis',
+                    content: `
+                        <div class="spec-card">
+                            <div class="spec-title">SonarQube Metrics</div>
+                            <ul>
+                                <li>Code Coverage: 95%</li>
+                                <li>Technical Debt: 2.5 days</li>
+                                <li>Code Smells: 0</li>
+                                <li>Duplications: 0.5%</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                'security': {
+                    title: 'Security Analysis',
+                    content: `
+                        <div class="spec-card">
+                            <div class="spec-title">Security Measures</div>
+                            <ul>
+                                <li>OWASP Compliance: 100%</li>
+                                <li>Dependency Scanning: Passed</li>
+                                <li>Security Hotspots: 0</li>
+                                <li>Vulnerabilities: 0</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                'performance': {
+                    title: 'Performance Analysis',
+                    content: `
+                        <div class="spec-card">
+                            <div class="spec-title">Performance Metrics</div>
+                            <ul>
+                                <li>Load Time: < 1.2s</li>
+                                <li>Time to First Byte: 200ms</li>
+                                <li>Resource Optimization: 100%</li>
+                                <li>Cache Hit Ratio: 95%</li>
+                            </ul>
+                        </div>
+                    `
+                }
+            };
+
+            const details = metricDetails[metric];
+            if (details) {
+                showModal(details.title, details.content);
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize with some animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach((section, index) => {
+                setTimeout(() => {
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+
+        // New functions for enhanced features
+        let testSimulation;
+        
+        function startTestSimulation() {
+            const testOutput = document.getElementById('testOutput');
+            const tests = [
+                'Running unit tests...',
+                'Integration tests started...',
+                'Performance benchmarks...',
+                'Security scanning...',
+                'All tests completed successfully.'
+            ];
+            let index = 0;
+
+            testSimulation = setInterval(() => {
+                if (index < tests.length) {
+                    testOutput.innerHTML += `\n> ${tests[index]}`;
+                    testOutput.scrollTop = testOutput.scrollHeight;
+                    index++;
+                } else {
+                    clearInterval(testSimulation);
+                }
+            }, 2000);
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            // Handle dropped test components
+            startTestSimulation();
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+        }
+
+        function showImageModal(type) {
+            const modalContent = {
+                software: {
+                    title: 'Fragalyst Software Interface',
+                    content: '<img src="/api/placeholder/800/600" alt="Software Interface" style="width:100%">'
+                },
+                drone: {
+                    title: 'Drone Hardware',
+                    content: '<img src="/api/placeholder/800/600" alt="Drone Hardware" style="width:100%">'
+                },
+                architecture: {
+                    title: 'System Architecture',
+                    content: '<img src="/api/placeholder/800/600" alt="System Architecture" style="width:100%">'
+                }
+            };
+
+            const details = modalContent[type];
+            if (details) {
+                showModal(details.title, details.content);
+            }
+        }
+
+        // Initialize with animations
+        document.addEventListener('DOMContentLoaded', function() {
+            startTestSimulation();
+            
+            // Add random log entries
+            setInterval(() => {
+                const logViewer = document.getElementById('logViewer');
+                const logs = [
+                    '[INFO] Health check passed',
+                    '[DEBUG] Processing sensor data',
+                    '[INFO] New drone connected',
+                    '[WARN] Battery level low on Drone-7',
+                    '[INFO] Mission completed successfully'
+                ];
+                
+                const randomLog = logs[Math.floor(Math.random() * logs.length)];
+                logViewer.innerHTML += `\n${randomLog}`;
+                logViewer.scrollTop = logViewer.scrollHeight;
+            }, 5000);
+        });
+        
+        // Initialize Mermaid with custom theme
+        mermaid.initialize({
+            theme: 'neutral',
+            startOnLoad: true,
+            flowchart: {
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
+</body>
+</html>
